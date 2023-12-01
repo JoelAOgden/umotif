@@ -5,6 +5,7 @@ import (
 	"github.com/JoelAOgden/umotif/mock"
 	"github.com/JoelAOgden/umotif/questionnaire"
 	"github.com/JoelAOgden/umotif/queue"
+	"github.com/JoelAOgden/umotif/rescheduler"
 	"github.com/JoelAOgden/umotif/scheduleQuestionnaire"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -25,7 +26,7 @@ func LambdaHandler(ctx context.Context, event QuestionnaireCompletedEvent) (stri
 	mockSqsClient := mock.SqsClient{}
 
 	// todo: this
-	rescheduler := reschedulerService{
+	reschedulerService := rescheduler.Service{
 		questionnaire.Service{
 			DataClient: mockDatabaseClient,
 		},
@@ -37,11 +38,11 @@ func LambdaHandler(ctx context.Context, event QuestionnaireCompletedEvent) (stri
 		},
 	}
 
-	err := rescheduler.SubmitQuestionnaireCompletion(ctx, questionnaireCompletedInput{
-		userId:               event.UserId,
-		questionnaireId:      event.QuestionnaireId,
-		completedAt:          event.CompletedAt,
-		remainingCompletions: event.RemainingCompletions,
+	err := reschedulerService.SubmitQuestionnaireCompletion(ctx, rescheduler.QuestionnaireCompletedInput{
+		UserId:               event.UserId,
+		QuestionnaireId:      event.QuestionnaireId,
+		CompletedAt:          event.CompletedAt,
+		RemainingCompletions: event.RemainingCompletions,
 	})
 	if err != nil {
 		return "", err

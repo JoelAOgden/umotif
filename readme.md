@@ -21,3 +21,8 @@ The async stuff is within the rescheduler ScheduleNewQuestionnaire function. Whi
 I'm not a fan of the ScheduleNewQuestionnaire function but the messiness of it's pretty self contained so can be adjusted without effecting the other code.
 
 Maybe some sort of event based system might work, maybe there's a design pattern I didn't think of, but I dunno, I'm limited on time :).
+
+## Lambda folder
+I have chosen to move the main file into a lambda folder, in my experience it had been much easier to organise and build the zip files for each lambda if they're contained within they're own folder and main file like above.
+
+This is obviously just personal preference, I'm just not a fan of coupling my packages to the aws lambda package.

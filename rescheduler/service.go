@@ -1,4 +1,4 @@
-package main
+package rescheduler
 
 import (
 	"context"
@@ -20,35 +20,35 @@ type queueService interface {
 	PushToQueue(ctx context.Context, msg queue.Message) error
 }
 
-type reschedulerService struct {
+type Service struct {
 	// Although the interfaces don't prevent coupling here they are very useful for testing
 	QuestionnaireService         questionnaireService
 	ScheduleQuestionnaireService scheduleQuestionnaireService
 	SqsService                   queueService
 }
 
-type questionnaireCompletedInput struct {
-	userId               string
-	questionnaireId      string
-	completedAt          string
-	remainingCompletions int
+type QuestionnaireCompletedInput struct {
+	UserId               string
+	QuestionnaireId      string
+	CompletedAt          string
+	RemainingCompletions int
 }
 
-func (s reschedulerService) SubmitQuestionnaireCompletion(ctx context.Context, input questionnaireCompletedInput) error {
+func (s Service) SubmitQuestionnaireCompletion(ctx context.Context, input QuestionnaireCompletedInput) error {
 
-	if !s.NewScheduleRequired(input.remainingCompletions) {
+	if !s.NewScheduleRequired(input.RemainingCompletions) {
 		return s.CompleteQuestionnaire(ctx)
 	}
 
-	currentQuestionnaire, err := s.QuestionnaireService.GetQuestionnaire(ctx, input.questionnaireId)
+	currentQuestionnaire, err := s.QuestionnaireService.GetQuestionnaire(ctx, input.QuestionnaireId)
 	if err != nil {
 		return err
 	}
 
-	return s.ScheduleNewQuestionnaire(ctx, input.questionnaireId, input.userId, input.completedAt, currentQuestionnaire.HoursBetweenAttempts)
+	return s.ScheduleNewQuestionnaire(ctx, input.QuestionnaireId, input.UserId, input.CompletedAt, currentQuestionnaire.HoursBetweenAttempts)
 }
 
-func (s reschedulerService) NewScheduleRequired(RemainingCompletions int) bool {
+func (s Service) NewScheduleRequired(RemainingCompletions int) bool {
 
 	// this can be expanded to include other conditions as needed
 	// I'm not 100% certain what those conditions are if I'm honest
@@ -58,11 +58,11 @@ func (s reschedulerService) NewScheduleRequired(RemainingCompletions int) bool {
 	return RemainingCompletions > 0
 }
 
-func (s reschedulerService) CompleteQuestionnaire(ctx context.Context) error {
+func (s Service) CompleteQuestionnaire(ctx context.Context) error {
 	return s.SqsService.PushToQueue(ctx, queue.Message{Body: "user has completed all questionnaire"}) // todo: find out the messages
 }
 
-func (s reschedulerService) ScheduleNewQuestionnaire(ctx context.Context, questionnaireId string, userId string, completedAt string, HoursBetweenAttempts int) error {
+func (s Service) ScheduleNewQuestionnaire(ctx context.Context, questionnaireId string, userId string, completedAt string, HoursBetweenAttempts int) error {
 
 	errorChan := make(chan error)
 	wg := sync.WaitGroup{}
