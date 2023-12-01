@@ -1,94 +1,23 @@
-Main Code Test
+Thoughts while building
 ==============
 
-## Code Test Overview
+First off, this isn't production ready there's a bunch of questions I have but I have tried to build something with the foundations of a good piece of code.
 
-The goal of this test is to see how well you approach situations and to gauge your level with programming languages in general.  
-* It is **not** to produce a working piece of software that covers every edge case or the vast array of libraries out there.  
-* We are not looking for completeness and typos are allowed :) 
-* It is not designed to catch you out
-* It doesn't need to run!  (Leave pseudocode describing your intentions if in doubt)
-* Pseudocode what you are about to do before going into the detail of the code (so that if you don't complete something, we can see your direction of travel)
-* Show your working / Be generous with your comments
-* **Use Google!** - do not be afraid to look up references!
-* How long you put into the test is up to yourself, but we recommend only a few hours in total.
-* Details of what you should do are in task.md
+## Queue service
+I'm not a fan of this, I would rather have a direct client but without knowing the structure of the queue or how it fits into the architecture I wasn't sure what to do, so I created a package to separate it out.
 
+I would rather keep everything within the package that relates to it's function to follow golang "guidelines" but without knowing if the sqs messages are part of the scheduling logic or the rescheduling logic I didn't want to commit to either.
 
-**Read all READMEs carefully before coding and heed the notes and advice in each!**
+## Testing
+Nothing crazy here, it's a simple application so I've just created some basic mocks and check whether the functions behave correctly with them.
 
+## "should it be rescheduled"
+I'm not sure if I'm missing something here but other than the remaining completions I can't see any other logic behind whether a new schedule is needed.
 
-## Abstract
+Initially I thought I'd need to compare the number of attempts but I can't seem to find a way to know the current participants attempt count. Because I'm unsure I've bunkered the function away and it's pretty trivial to adjust it if needs be.
 
-One way of capturing data from a participant in a study is to get them to fill in a Questionnaire.
+## asynch
+The async stuff is within the rescheduler ScheduleNewQuestionnaire function. While writing this I'm certain there is a better way to organise this but I wanted to keep it pretty readable at a higher level.
+I'm not a fan of the ScheduleNewQuestionnaire function but the messiness of it's pretty self contained so can be adjusted without effecting the other code.
 
-## Database Structure
-
-You will be working with these tables:
-
-```mysql
-CREATE TABLE participants (
-    id VARCHAR(128) PRIMARY KEY NOT NULL,
-    name VARCHAR(128) NOT NULL
-);
-
-CREATE TABLE questionnaires (
-    id VARCHAR(128) PRIMARY KEY NOT NULL,
-    study_id VARCHAR(128) NOT NULL,
-    name VARCHAR(128) NOT NULL,
-    questions JSON NOT NULL,
-    max_attempts INT,
-    hours_between_attempts INT DEFAULT 24
-);
-
-CREATE TABLE scheduled_questionnaires (
-    id VARCHAR(128) PRIMARY KEY NOT NULL,
-    questionnaire_id VARCHAR(128) NOT NULL,
-    participant_id VARCHAR(128) NOT NULL,
-    scheduled_at DATETIME NOT NULL,
-    status ENUM(pending,completed)
-);
-
-CREATE TABLE questionnaire_results (
-    id VARCHAR(128) NOT NULL,
-    answers JSON NOT NULL,
-    questionnaire_id VARCHAR(128) NOT NULL,
-    participant_id VARCHAR(128) NOT NULL,
-    questionnaire_schedule_id VARCHAR(128),
-    completed_at DATETIME
-);
-```
-
-### Participants
-
-This is your basic user table of participants of a study.
-
-### Questionnaires (`questionnaires`)
-
-This is a table that holds various questionnaires that can be completed and the questions within them.
-
-* `questions` holds the configuration for the questions for this questionnaire.
-* The `max_attempts` column will contain the maximum number of times a participant can fill in a given questionnaire - if this is null, then there is no limit to the number of times they can fill it in.
-* `hours_between_attempts` is an integer of the number of hours in the future the next questionnaire should be scheduled for. For the sake of this test, this should be the number of hours from the time the questionnaire was filled in.
-
-This table is general / global - that is, it is an abstract table about the questionnaires themselves, and nothing is linked to any specific participants.
-
-### Scheduled Questionnaires (`scheduled_questionnaires`)
-
-This is a table that holds a list of scheduled questionnaires for specific participants to fill in.
-
-* The `scheduled_at` column denotes when a questionnaire should become available to a participant, and the status column denotes the status of the scheduled questionnaire.
-
-For example, participant X might have questionnaire Y scheduled for 6pm today and questionnaire Z scheduled for 9am tomorrow. This would be represented by two rows in this table.
-
-### Questionnaire Results (`questionnaire_results`)
-
-When a participant fills in a questionnaire, the results end up in here.
-
-It must be linked to the participant and questionnaire
-
-If it was part of a schedule, then it will be linked to the schedule as well through the `questionnaire_schedule_id` column. Some questionnaires can be filled in outside of a schedule, in which case this column will be null.
-
-## Scheduling
-
-The `Questionnaire` model represents the abstract questionnaire configuration. A `Questionnaire Schedule` represents a specific request for a participant to fill in a `Questionnaire`.
+Maybe some sort of event based system might work, maybe there's a design pattern I didn't think of, but I dunno, I'm limited on time :).
