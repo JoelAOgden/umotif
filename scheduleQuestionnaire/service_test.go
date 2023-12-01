@@ -40,6 +40,6 @@ type clientMock struct {
 	onPut func(ctx context.Context, schedule ScheduledQuestionnaire) error
 }
 
-func (m clientMock) Put(ctx context.Context, schedule ScheduledQuestionnaire) error {
+func (m clientMock) PutScheduleQuestionnaire(ctx context.Context, schedule ScheduledQuestionnaire) error {
 	return m.onPut(ctx, schedule)
 }

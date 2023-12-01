@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/JoelAOgden/umotif/mock"
 	"github.com/JoelAOgden/umotif/questionnaire"
 	"github.com/JoelAOgden/umotif/queue"
 	"github.com/JoelAOgden/umotif/scheduleQuestionnaire"
@@ -20,16 +21,19 @@ type QuestionnaireCompletedEvent struct {
 
 func LambdaHandler(ctx context.Context, event QuestionnaireCompletedEvent) (string, error) {
 
+	mockDatabaseClient := mock.NewMockDatabaseClient()
+	mockSqsClient := mock.SqsClient{}
+
 	// todo: this
 	rescheduler := reschedulerService{
 		questionnaire.Service{
-			DataClient: nil,
+			DataClient: mockDatabaseClient,
 		},
 		scheduleQuestionnaire.Service{
-			DataClient: nil,
+			DataClient: mockDatabaseClient,
 		},
 		queue.SqsService{
-			Client: nil,
+			Client: mockSqsClient,
 		},
 	}
 

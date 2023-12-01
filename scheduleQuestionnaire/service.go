@@ -6,7 +6,7 @@ import (
 )
 
 type ScheduledQuestionnairesDataClient interface {
-	Put(ctx context.Context, schedule ScheduledQuestionnaire) error
+	PutScheduleQuestionnaire(ctx context.Context, schedule ScheduledQuestionnaire) error
 }
 
 type Service struct {
@@ -28,7 +28,7 @@ func (s Service) SubmitNewSchedule(ctx context.Context, questionnaireId string, 
 		Status:          StatusPending,
 	}
 
-	err = s.DataClient.Put(ctx, newSchedule)
+	err = s.DataClient.PutScheduleQuestionnaire(ctx, newSchedule)
 	if err != nil {
 		return err
 	}
