@@ -1,8 +1,6 @@
 Thoughts while building
 ==============
 
-First off, this isn't production ready there's a bunch of questions I have but I have tried to build something with the foundations of a good piece of code.
-
 ## Queue service
 I'm not a fan of this, I would rather have a direct client but without knowing the structure of the queue or how it fits into the architecture I wasn't sure what to do, so I created a package to separate it out.
 
