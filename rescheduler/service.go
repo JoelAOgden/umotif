@@ -36,7 +36,7 @@ type QuestionnaireCompletedInput struct {
 
 func (s Service) SubmitQuestionnaireCompletion(ctx context.Context, input QuestionnaireCompletedInput) error {
 
-	if !s.NewScheduleRequired(input.RemainingCompletions) {
+	if !newScheduleRequired(input.RemainingCompletions) {
 		return s.CompleteQuestionnaire(ctx)
 	}
 
@@ -48,7 +48,7 @@ func (s Service) SubmitQuestionnaireCompletion(ctx context.Context, input Questi
 	return s.ScheduleNewQuestionnaire(ctx, input.QuestionnaireId, input.UserId, input.CompletedAt, currentQuestionnaire.HoursBetweenAttempts)
 }
 
-func (s Service) NewScheduleRequired(RemainingCompletions int) bool {
+func newScheduleRequired(RemainingCompletions int) bool {
 
 	// this can be expanded to include other conditions as needed
 	// I'm not 100% certain what those conditions are if I'm honest

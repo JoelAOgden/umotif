@@ -9,6 +9,8 @@ I would rather keep everything within the package that relates to it's function 
 ## Testing
 Nothing crazy here, it's a simple application so I've just created some basic mocks and check whether the functions behave correctly with them.
 
+The biggest smell I have with this, is that the testing mostly just checks the mock service is triggered, this is good but I think it needs a bit of a refactor to make things easier to read.
+
 ## "should it be rescheduled"
 I'm not sure if I'm missing something here but other than the remaining completions I can't see any other logic behind whether a new schedule is needed.
 
