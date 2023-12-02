@@ -8,9 +8,104 @@ import (
 	"testing"
 )
 
-func TestSubmitQuestionnaireCompletion(t *testing.T) {
-	// I'm running out of time but essentially, just test using the mocks below
-	// an example I "finished" can be seen in the schedulerQuestionnaire package
+func TestSubmitQuestionnaireCompletion_Required(t *testing.T) {
+
+	ctx := context.Background()
+
+	givenUserId := "123"
+	givenQuestionnaireId := "234"
+	givenCompletedAt := "345"
+	givenRemainingCompletions := 1
+
+	givenQuestionnaire := questionnaire.Questionnaire{
+		Id:                   givenQuestionnaireId,
+		StudyId:              "studyId",
+		Name:                 "name",
+		Questions:            "questions",
+		MaxAttempts:          7,
+		HoursBetweenAttempts: 2,
+	}
+	wantQuestionnaireId := givenQuestionnaireId
+	mockQuestionnaireService := questionnaireServiceMock{
+		onGetQuestionnaire: func(ctx context.Context, id string) (questionnaire.Questionnaire, error) {
+			assert.Equal(t, id, wantQuestionnaireId)
+			return givenQuestionnaire, nil
+		},
+	}
+
+	scheduleQuestionnaireServiceTriggered := false
+	mockScheduleQuestionnaireService := scheduleQuestionnaireServiceMock{
+		onSubmitNewSchedule: func(ctx context.Context, questionnaireId string, userId string, completedAt string, hoursBetweenAttempts int) error {
+			scheduleQuestionnaireServiceTriggered = true
+			assert.Equal(t, questionnaireId, givenQuestionnaireId)
+			assert.Equal(t, userId, givenUserId)
+			assert.Equal(t, completedAt, givenCompletedAt)
+			assert.Equal(t, hoursBetweenAttempts, givenQuestionnaire.HoursBetweenAttempts)
+			return nil
+		},
+	}
+
+	sqsWant := queue.Message{"New Schedule Added"}
+
+	sqsTriggered := false
+	mockSqs := queueServiceMock{
+		onPushToQueue: func(ctx context.Context, msg queue.Message) error {
+			assert.Equal(t, sqsWant, msg)
+			sqsTriggered = true
+			return nil
+		},
+	}
+	service := Service{
+		QuestionnaireService:         mockQuestionnaireService,
+		ScheduleQuestionnaireService: mockScheduleQuestionnaireService,
+		SqsService:                   mockSqs,
+	}
+
+	err := service.SubmitQuestionnaireCompletion(ctx, QuestionnaireCompletedInput{
+		UserId:               givenUserId,
+		QuestionnaireId:      givenQuestionnaireId,
+		CompletedAt:          givenCompletedAt,
+		RemainingCompletions: givenRemainingCompletions,
+	})
+
+	assert.NoError(t, err)
+	assert.True(t, scheduleQuestionnaireServiceTriggered)
+	assert.True(t, sqsTriggered)
+
+}
+
+func TestSubmitQuestionnaireCompletion_NotRequired(t *testing.T) {
+
+	ctx := context.Background()
+
+	givenUserId := "123"
+	givenQuestionnaireId := "234"
+	givenCompletedAt := "345"
+	givenRemainingCompletions := 0
+
+	want := queue.Message{"user has completed all questionnaire"}
+
+	sqsTriggered := false
+	mockSqs := queueServiceMock{
+		onPushToQueue: func(ctx context.Context, msg queue.Message) error {
+			assert.Equal(t, want, msg)
+			sqsTriggered = true
+			return nil
+		},
+	}
+	service := Service{
+		SqsService: mockSqs,
+	}
+
+	err := service.SubmitQuestionnaireCompletion(ctx, QuestionnaireCompletedInput{
+		UserId:               givenUserId,
+		QuestionnaireId:      givenQuestionnaireId,
+		CompletedAt:          givenCompletedAt,
+		RemainingCompletions: givenRemainingCompletions,
+	})
+
+	assert.NoError(t, err)
+	assert.True(t, sqsTriggered)
 
 }
 

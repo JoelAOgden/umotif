@@ -26,3 +26,6 @@ Maybe some sort of event based system might work, maybe there's a design pattern
 I have chosen to move the main file into a lambda folder, in my experience it had been much easier to organise and build the zip files for each lambda if they're contained within they're own folder and main file like above.
 
 This is obviously just personal preference, I'm just not a fan of coupling my packages to the aws lambda package.
+
+## Mocks
+The mocks should probably be combined into a mock package to make the code a little easier to read.
